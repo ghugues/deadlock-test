@@ -1,0 +1,11 @@
+# User specific files
+Deadlock Test.xcodeproj/project.xcworkspace/xcuserdata/
+Deadlock Test.xcodeproj/xcuserdata/
+Deadlock Test.xcworkspace/xcuserdata/
+
+# External dependencies
+Pods/
+
+# OS Specific files
+.DS_Store*
+._*
