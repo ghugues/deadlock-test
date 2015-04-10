@@ -7,8 +7,7 @@
 //
 
 #import "ViewController.h"
-#import <Parse/Parse.h>
-#import <ParseFacebookUtils/PFFacebookUtils.h>
+#import "AppDelegate.h"
 
 @interface NSArray (Additions)
 - (BOOL)containsAllObjectsFromArray:(NSArray *)array;
@@ -19,7 +18,9 @@
 
 - (IBAction)requestButtonAction:(id)sender
 {
-    [self requestFacebookReadPermissionsWithCompletionBlock:nil];
+    [self requestFacebookReadPermissionsWithCompletionBlock:^(BOOL succeeded, NSError *error) {
+        [AppDelegate fetchCurrentUser];
+    }];
 }
 
 - (void)requestFacebookReadPermissionsWithCompletionBlock:(void(^)(BOOL succeeded, NSError *error))completionBlock

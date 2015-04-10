@@ -8,16 +8,9 @@
 
 #import "AppDelegate.h"
 #import "ViewController.h"
-#import <Parse/Parse.h>
-#import <ParseFacebookUtils/PFFacebookUtils.h>
-
-@interface NSString (Additions)
-+ (NSString *)stringWithRandomASCIICharactersWithLength:(NSUInteger)length;
-@end
 
 
 @implementation AppDelegate
-
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
@@ -37,6 +30,7 @@
     } else {
         NSLog(@"User already logged in.");
     }
+
     return YES;
 }
 
@@ -44,67 +38,39 @@
     return [FBAppCall handleOpenURL:url sourceApplication:sourceApplication withSession:[PFFacebookUtils session]];
 }
 
-- (void)applicationDidEnterBackground:(UIApplication *)application
-{
-    [self synchronizeCurrentUser];
++ (void)fetchCurrentUser {
+    [(AppDelegate *)[UIApplication sharedApplication].delegate fetchCurrentUser];
 }
 
-- (void)testDeadlock
+- (void)fetchCurrentUser
 {
-    NSLog(@"testDeadlock ...");
+    NSLog(@"%s", __PRETTY_FUNCTION__);
 
-    usleep(200);
-
-    [self synchronizeCurrentUser];
-
-    NSLog(@"No deadlock.");
-}
-
-- (void)synchronizeCurrentUser
-{
     PFUser *currentUser = [PFUser currentUser];
     if (!currentUser || !currentUser.objectId) {
         return;
     }
 
     UIBackgroundTaskIdentifier taskId = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:nil];
+    NSTimer *timer = [NSTimer timerWithTimeInterval:0.01 target:self selector:@selector(timerFireMethod:) userInfo:nil repeats:YES];
+    [[NSRunLoop mainRunLoop] addTimer:timer forMode:NSDefaultRunLoopMode];
 
     [currentUser fetchInBackgroundWithBlock:^(PFObject *object, NSError *error) {
         if (!object || error) {
             NSLog(@"Fetching current user %@ failed with error : %@", [PFUser currentUser], error);
-            [[UIApplication sharedApplication] endBackgroundTask:taskId];
         } else {
             NSLog(@"Fetching current user succeeded.");
-            [currentUser setObject:[NSString stringWithRandomASCIICharactersWithLength:10] forKey:@"randomValue"];
-            [currentUser saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
-                if (!succeeded || error) {
-                    NSLog(@"Saving currentUser %@ failed with error : %@", [PFUser currentUser], error);
-                } else {
-                    NSLog(@"Saving currentUser succeeded.");
-                }
-                [[UIApplication sharedApplication] endBackgroundTask:taskId];
-            }];
         }
+        [timer invalidate];
+        [[UIApplication sharedApplication] endBackgroundTask:taskId];
     }];
 }
 
-@end
-
-
-@implementation NSString (Additions)
-
-+ (NSString *)stringWithRandomASCIICharactersWithLength:(NSUInteger)length
+- (void)timerFireMethod:(NSTimer *)timer
 {
-    NSString *characters = @"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    NSMutableString *randomString = [NSMutableString stringWithCapacity:length];
-    NSUInteger charactersCount = characters.length;
-
-    for (int i = 0; i < length; i++) {
-        unichar randomChar = [characters characterAtIndex:arc4random_uniform((u_int32_t)charactersCount)];
-        [randomString appendString:[NSString stringWithCharacters:&randomChar length:1]];
-    }
-
-    return [NSString stringWithString:randomString];
+//    static int count = 0;
+//    NSLog(@"%s : %3d %@", __PRETTY_FUNCTION__, ++count, [PFUser currentUser].objectId);
+    [PFUser currentUser].objectId;
 }
 
 @end
